@@ -3,10 +3,10 @@
 # Purpose:     Python program that solves the Travelling Salesman Problem
 #              with Genetic Algorithms
 #
-# Author:      Alejandro Jim?nez Encinas
+# Author:      Alejandro Jimenez Encinas
 #
 # Created:     11/04/2013
-# Copyright:   (c) Alejandro Jim?nez Encinas 2013
+# Copyright:   (c) Alejandro Jimenez Encinas 2013
 # Licence:     CC BY-NC-SA
 #-------------------------------------------------------------------------------
 
