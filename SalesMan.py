@@ -12,6 +12,7 @@
 
 from random import randint
 from Tkinter import *
+from math import sqrt
 
 country = None
 master = None
@@ -20,16 +21,21 @@ ga = None
 iteration = 0
 
 class Chromosome:
-    def __init__(self, size, mutation_probability):
-        self.data = [0]
-        for i in range(size-1):
-            index = randint(1, size-1)
-            while index in self.data:
+    def __init__(self, size, mutation_probability = 0.1, data = [0]):
+        if data == [0]:
+            self.data = data
+            for i in range(size-1):
                 index = randint(1, size-1)
-            self.data.append(index)
-        self.data.append(0)
+                while index in self.data:
+                    index = randint(1, size-1)
+                self.data.append(index)
+            self.data.append(0)
+        else:
+            self.data = data
 
         self.mutation_probability = mutation_probability
+
+        self.life_time = 0
 
     def crossover(self, other):
         crossover_point = randint(1, len(self.data)-2)
@@ -56,35 +62,48 @@ class Chromosome:
     def adaptability(self):
         distance = 0
         for i in range(len(self.data)-1):
-            distance += (country.cities[self.data[i+1]].x-country.cities[self.data[i]].x)**2 + (country.cities[self.data[i+1]].y-country.cities[self.data[i]].y)**2
+            distance += sqrt((country.cities[self.data[i+1]].x-country.cities[self.data[i]].x)**2 + (country.cities[self.data[i+1]].y-country.cities[self.data[i]].y)**2)
         return distance
 
 class GA:
-    def __init__(self, country, max_generations, population_size):
+    def __init__(self, country, max_generations = 1000, init_population_size = 10, max_population_size = 500, max_life_time = 3):
         self.country = country
         self.max_generations = max_generations
+        self.max_life_time = max_life_time
+        self.max_population_size = max_population_size
         self.population = []
-        for i in range(population_size):
-            self.population.append(Chromosome(country.size(), 0.1))
+        for i in range(init_population_size):
+            self.population.append(Chromosome(country.size()))
+        self.best = self.population[0].data
+        self.best_equal_count = 0
 
     def step(self):
         self.sort()
+        if self.best == self.get_best().data:
+            self.best_equal_count += 1
+        else:
+            self.best_equal_count = 0
+            self.best = self.get_best().data
         self.crossover()
-        self.mutation()
+        for i in self.population:
+            if i.life_time > self.max_life_time:
+                self.population.remove(i)
+            else:
+                i.life_time += 1
 
     def sort(self):
         self.population = [p for (a, p) in sorted(zip(self.adaptability(), self.population))]
+        self.population = self.population[:self.max_population_size]
 
     def crossover(self):
-        child1_best, child2_best = self.population[0].crossover(self.population[1])
-        for i in range(2, len(self.population)-4, 2):
-            self.population[i].data, self.population[i+1].data = self.population[i].crossover(self.population[i+1])
-        self.population[-2].data = child1_best
-        self.population[-1].data = child2_best
-
-    def mutation(self):
-        for i in self.population:
-            i.mutation()
+        for i in range(0, len(self.population)-4, 2):
+            child1_data, child2_data = self.population[i].crossover(self.population[i+1])
+            child1 = Chromosome(country.size(), data = child1_data)
+            child1.mutation()
+            child2 = Chromosome(country.size(), data = child2_data)
+            child2.mutation()
+            self.population.append(child1)
+            self.population.append(child2)
 
     def adaptability(self):
         adap = []
@@ -142,16 +161,21 @@ def step():
         w.create_line(country.cities[best[i]].x, country.cities[best[i]].y, country.cities[best[i+1]].x, country.cities[best[i+1]].y)
     ga.step()
 
-    master.after(1, step)
+    if ga.best_equal_count > 99:
+        print "Solution found"
+    elif iteration > ga.max_generations:
+        print "Max generations reached"
+    else:
+        master.after(1, step)
 
 def main():
     global country, master, w, ga
-    country = Country(1000, 1000, 10)
+    country = Country(800, 800, 12)
     master = Tk()
-    w = Canvas(master, width=1000, height=1000)
+    w = Canvas(master, width=800, height=800)
     w.pack()
 
-    ga = GA(country, 1000, 1000)
+    ga = GA(country)
 
     master.after(1, step)
     master.mainloop()
