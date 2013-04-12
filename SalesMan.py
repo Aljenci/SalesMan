@@ -21,7 +21,7 @@ ga = None
 iteration = 0
 
 class Chromosome:
-    def __init__(self, size, mutation_probability = 0.1, data = [0]):
+    def __init__(self, size, mutation_probability = 10, data = [0]):
         if data == [0]:
             self.data = data
             for i in range(size-1):
@@ -85,6 +85,7 @@ class GA:
             self.best_equal_count = 0
             self.best = self.get_best().data
         self.crossover()
+        self.mutation()
         for i in self.population:
             if i.life_time > self.max_life_time:
                 self.population.remove(i)
@@ -110,6 +111,10 @@ class GA:
         for i in self.population:
             adap.append(i.adaptability())
         return adap
+
+    def mutation(self):
+        for i in self.population:
+            i.mutation()
 
     def get_best(self):
         return [p for (a, p) in sorted(zip(self.adaptability(), self.population))][0]
@@ -155,10 +160,10 @@ def step():
 
     w.delete(ALL)
     for city in country.cities:
-        w.create_oval(city.x-2, city.y-2, city.x+2, city.y+2)
+        w.create_oval(city.x-2, city.y-2, city.x+2, city.y+2, fill="red")
     best = ga.get_best().data
     for i in range(len(best)-1):
-        w.create_line(country.cities[best[i]].x, country.cities[best[i]].y, country.cities[best[i+1]].x, country.cities[best[i+1]].y)
+        w.create_line(country.cities[best[i]].x, country.cities[best[i]].y, country.cities[best[i+1]].x, country.cities[best[i+1]].y, fill="blue")
     ga.step()
 
     if ga.best_equal_count > 99:
@@ -170,7 +175,7 @@ def step():
 
 def main():
     global country, master, w, ga
-    country = Country(800, 800, 12)
+    country = Country(800, 800, 20)
     master = Tk()
     w = Canvas(master, width=800, height=800)
     w.pack()
